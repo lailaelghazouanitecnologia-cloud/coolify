@@ -57,17 +57,12 @@ pub async fn get(
 ) -> Result<Json<ProjectWithEnvironments>, ApiError> {
     let repo = state.projects();
 
-    let project = repo.find_by_id(id)
+    let project = repo.find_by_id_and_team(id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
 
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
-
-    let environments = repo.get_environments(project.id as i64)
+    let environments = repo.find_environments(project.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch environments: {}", e)))?;
 
@@ -91,46 +86,15 @@ pub async fn create(
 
     let repo = state.projects();
 
-    // Check for duplicate name within team
-    let existing = repo.find_by_name_and_team(&body.name, auth.team_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to check project name: {}", e)))?;
-
-    if existing.is_some() {
-        return Err(ApiError::conflict("A project with this name already exists"));
+    // Create project with default production environment
+    let mut project = Project::new(auth.team_id, body.name);
+    if let Some(desc) = body.description {
+        project.description = Some(desc);
     }
 
-    // Create project
-    let project = Project {
-        id: 0,
-        uuid: Uuid::new_v4(),
-        name: body.name,
-        description: body.description,
-        team_id: auth.team_id,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-        deleted_at: None,
-    };
-
-    let created = repo.create(project)
+    let (created, _env) = repo.create_with_environment(&project)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to create project: {}", e)))?;
-
-    // Create default "production" environment
-    let default_env = Environment {
-        id: 0,
-        uuid: Uuid::new_v4(),
-        name: "production".to_string(),
-        description: Some("Production environment".to_string()),
-        project_id: created.id,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-        deleted_at: None,
-    };
-
-    repo.create_environment(default_env)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to create default environment: {}", e)))?;
 
     Ok(Json(created))
 }
@@ -144,33 +108,16 @@ pub async fn update(
 ) -> Result<Json<Project>, ApiError> {
     let repo = state.projects();
 
-    let mut project = repo.find_by_id(id)
+    let mut project = repo.find_by_id_and_team(id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
 
     // Apply updates
     if let Some(name) = body.name {
         if name.trim().is_empty() {
             return Err(ApiError::validation("Project name cannot be empty"));
         }
-
-        // Check for duplicate name
-        if name != project.name {
-            let existing = repo.find_by_name_and_team(&name, auth.team_id)
-                .await
-                .map_err(|e| ApiError::internal(format!("Failed to check project name: {}", e)))?;
-
-            if existing.is_some() {
-                return Err(ApiError::conflict("A project with this name already exists"));
-            }
-        }
-
         project.name = name;
     }
 
@@ -178,9 +125,7 @@ pub async fn update(
         project.description = Some(description);
     }
 
-    project.updated_at = chrono::Utc::now();
-
-    let updated = repo.update(project)
+    let updated = repo.update(&project)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to update project: {}", e)))?;
 
@@ -195,34 +140,19 @@ pub async fn delete(
 ) -> Result<Json<()>, ApiError> {
     let repo = state.projects();
 
-    let project = repo.find_by_id(id)
+    let project = repo.find_by_id_and_team(id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
 
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
-
-    // Check if project has resources (applications, databases, services)
-    let app_count = state.applications().count_by_project(project.id as i64)
+    // Check if project has applications
+    let apps = state.applications().find_by_environment(project.id)
         .await
-        .map_err(|e| ApiError::internal(format!("Failed to count applications: {}", e)))?;
+        .map_err(|e| ApiError::internal(format!("Failed to check applications: {}", e)))?;
 
-    if app_count > 0 {
+    if !apps.is_empty() {
         return Err(ApiError::conflict(
             "Cannot delete project with active applications. Delete all applications first."
-        ));
-    }
-
-    let db_count = state.databases().count_by_project(project.id as i64)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to count databases: {}", e)))?;
-
-    if db_count > 0 {
-        return Err(ApiError::conflict(
-            "Cannot delete project with active databases. Delete all databases first."
         ));
     }
 
@@ -241,17 +171,12 @@ pub async fn list_environments(
 ) -> Result<Json<Vec<Environment>>, ApiError> {
     let repo = state.projects();
 
-    let project = repo.find_by_id(id)
+    let project = repo.find_by_id_and_team(id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
 
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
-
-    let environments = repo.get_environments(project.id as i64)
+    let environments = repo.find_environments(project.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch environments: {}", e)))?;
 
@@ -267,15 +192,10 @@ pub async fn create_environment(
 ) -> Result<Json<Environment>, ApiError> {
     let repo = state.projects();
 
-    let project = repo.find_by_id(id)
+    let project = repo.find_by_id_and_team(id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
 
     // Validate name
     if body.name.trim().is_empty() {
@@ -283,26 +203,20 @@ pub async fn create_environment(
     }
 
     // Check for duplicate name within project
-    let existing = repo.find_environment_by_name(project.id as i64, &body.name)
+    let existing_envs = repo.find_environments(project.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check environment name: {}", e)))?;
 
-    if existing.is_some() {
+    if existing_envs.iter().any(|e| e.name == body.name) {
         return Err(ApiError::conflict("An environment with this name already exists"));
     }
 
-    let environment = Environment {
-        id: 0,
-        uuid: Uuid::new_v4(),
-        name: body.name,
-        description: body.description,
-        project_id: project.id,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-        deleted_at: None,
-    };
+    let mut environment = Environment::new(project.id, body.name);
+    if let Some(desc) = body.description {
+        environment.description = Some(desc);
+    }
 
-    let created = repo.create_environment(environment)
+    let created = repo.create_environment(&environment)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to create environment: {}", e)))?;
 
@@ -317,15 +231,10 @@ pub async fn delete_environment(
 ) -> Result<Json<()>, ApiError> {
     let repo = state.projects();
 
-    let project = repo.find_by_id(project_id)
+    let project = repo.find_by_id_and_team(project_id, auth.team_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    // Verify team ownership
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Project belongs to another team"));
-    }
 
     let environment = repo.find_environment_by_id(env_id)
         .await
@@ -337,23 +246,23 @@ pub async fn delete_environment(
         return Err(ApiError::not_found("Environment not found in this project"));
     }
 
-    // Check if environment has resources
-    let app_count = state.applications().count_by_environment(environment.id as i64)
+    // Check if environment has applications
+    let apps = state.applications().find_by_environment(environment.id)
         .await
-        .map_err(|e| ApiError::internal(format!("Failed to count applications: {}", e)))?;
+        .map_err(|e| ApiError::internal(format!("Failed to check applications: {}", e)))?;
 
-    if app_count > 0 {
+    if !apps.is_empty() {
         return Err(ApiError::conflict(
             "Cannot delete environment with active applications. Delete all applications first."
         ));
     }
 
     // Cannot delete the last environment
-    let env_count = repo.count_environments(project.id as i64)
+    let envs = repo.find_environments(project.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to count environments: {}", e)))?;
 
-    if env_count <= 1 {
+    if envs.len() <= 1 {
         return Err(ApiError::bad_request("Cannot delete the last environment"));
     }
 

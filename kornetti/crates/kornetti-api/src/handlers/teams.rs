@@ -7,7 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
-use kornetti_core::models::Team;
+use kornetti_core::models::{Team, TeamSettings, TeamRole};
 use crate::{state::{AppState, AuthContext}, ApiError};
 
 #[derive(Deserialize)]
@@ -33,6 +33,15 @@ pub struct TeamWithMembers {
 pub struct InviteMemberRequest {
     pub email: String,
     pub role: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TeamMemberResponse {
+    pub user_id: Uuid,
+    pub email: String,
+    pub name: Option<String>,
+    pub role: TeamRole,
+    pub joined_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// List teams the current user belongs to
@@ -93,60 +102,21 @@ pub async fn create(
 
     // Create team
     let team = Team {
-        id: 0, // Will be set by database
-        uuid: Uuid::new_v4(),
+        id: Uuid::new_v4(),
         name: body.name,
         description: body.description,
-        personal_team: false,
-        show_boarding: false,
-        custom_server_limit: None,
-        discord_enabled: false,
-        discord_webhook_url: None,
-        discord_notifications_test: false,
-        discord_notifications_deployments: false,
-        discord_notifications_status_changes: false,
-        discord_notifications_database_backups: false,
-        discord_notifications_scheduled_tasks: false,
-        discord_notifications_server_disk_usage: false,
-        smtp_enabled: false,
-        smtp_from_address: None,
-        smtp_from_name: None,
-        smtp_recipients: None,
-        smtp_host: None,
-        smtp_port: None,
-        smtp_encryption: None,
-        smtp_username: None,
-        smtp_password: None,
-        smtp_timeout: None,
-        smtp_notifications_test: false,
-        smtp_notifications_deployments: false,
-        smtp_notifications_status_changes: false,
-        smtp_notifications_database_backups: false,
-        smtp_notifications_scheduled_tasks: false,
-        smtp_notifications_server_disk_usage: false,
-        telegram_enabled: false,
-        telegram_token: None,
-        telegram_chat_id: None,
-        telegram_notifications_test: false,
-        telegram_notifications_deployments: false,
-        telegram_notifications_status_changes: false,
-        telegram_notifications_database_backups: false,
-        telegram_notifications_scheduled_tasks: false,
-        telegram_notifications_server_disk_usage: false,
-        resend_enabled: false,
-        resend_api_key: None,
-        use_instance_email_settings: false,
+        personal: false,
+        settings: TeamSettings::default(),
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
-        deleted_at: None,
     };
 
-    let created = repo.create(team)
+    let created = repo.create(&team)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to create team: {}", e)))?;
 
     // Add the creator as owner
-    repo.add_member(created.id as i64, auth.user_id, "owner")
+    repo.add_member(created.id, auth.user_id, TeamRole::Owner)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to add owner: {}", e)))?;
 
@@ -168,11 +138,11 @@ pub async fn update(
         .ok_or_else(|| ApiError::not_found("Team not found"))?;
 
     // Verify user has permission to update
-    let role = repo.get_member_role(team.id as i64, auth.user_id)
+    let role = repo.get_member_role(id, auth.user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check role: {}", e)))?;
 
-    let can_update = auth.is_admin || matches!(role.as_deref(), Some("owner") | Some("admin"));
+    let can_update = auth.is_admin || role.map(|r| r.can_manage_team()).unwrap_or(false);
     if !can_update {
         return Err(ApiError::forbidden("You don't have permission to update this team"));
     }
@@ -189,9 +159,7 @@ pub async fn update(
         team.description = Some(description);
     }
 
-    team.updated_at = chrono::Utc::now();
-
-    let updated = repo.update(team)
+    let updated = repo.update(&team)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to update team: {}", e)))?;
 
@@ -212,17 +180,17 @@ pub async fn delete(
         .ok_or_else(|| ApiError::not_found("Team not found"))?;
 
     // Only owner or admin can delete
-    let role = repo.get_member_role(team.id as i64, auth.user_id)
+    let role = repo.get_member_role(id, auth.user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check role: {}", e)))?;
 
-    let can_delete = auth.is_admin || role.as_deref() == Some("owner");
+    let can_delete = auth.is_admin || role == Some(TeamRole::Owner);
     if !can_delete {
         return Err(ApiError::forbidden("Only team owners can delete teams"));
     }
 
     // Cannot delete personal team
-    if team.personal_team {
+    if team.personal {
         return Err(ApiError::bad_request("Cannot delete personal team"));
     }
 
@@ -238,16 +206,11 @@ pub async fn list_members(
     State(state): State<Arc<AppState>>,
     Extension(auth): Extension<AuthContext>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<TeamMember>>, ApiError> {
+) -> Result<Json<Vec<kornetti_core::models::TeamMember>>, ApiError> {
     let repo = state.teams();
 
     // Verify user is a member
-    let team = repo.find_by_id(id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch team: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Team not found"))?;
-
-    let is_member = repo.is_member(team.id as i64, auth.user_id)
+    let is_member = repo.is_member(id, auth.user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check membership: {}", e)))?;
 
@@ -255,7 +218,7 @@ pub async fn list_members(
         return Err(ApiError::forbidden("You are not a member of this team"));
     }
 
-    let members = repo.get_members(team.id as i64)
+    let members = repo.get_members(id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch members: {}", e)))?;
 
@@ -271,17 +234,18 @@ pub async fn invite_member(
 ) -> Result<Json<()>, ApiError> {
     let repo = state.teams();
 
-    let team = repo.find_by_id(id)
+    // Verify team exists
+    let _ = repo.find_by_id(id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch team: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Team not found"))?;
 
     // Verify user has permission to invite
-    let role = repo.get_member_role(team.id as i64, auth.user_id)
+    let role = repo.get_member_role(id, auth.user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check role: {}", e)))?;
 
-    let can_invite = auth.is_admin || matches!(role.as_deref(), Some("owner") | Some("admin"));
+    let can_invite = auth.is_admin || role.map(|r| r.can_manage_team()).unwrap_or(false);
     if !can_invite {
         return Err(ApiError::forbidden("You don't have permission to invite members"));
     }
@@ -294,7 +258,7 @@ pub async fn invite_member(
         .ok_or_else(|| ApiError::not_found("User not found"))?;
 
     // Check if already a member
-    let is_member = repo.is_member(team.id as i64, user.uuid)
+    let is_member = repo.is_member(id, user.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check membership: {}", e)))?;
 
@@ -302,9 +266,16 @@ pub async fn invite_member(
         return Err(ApiError::conflict("User is already a member of this team"));
     }
 
+    // Parse role
+    let member_role = match body.role.as_deref() {
+        Some("owner") => TeamRole::Owner,
+        Some("admin") => TeamRole::Admin,
+        Some("viewer") => TeamRole::Viewer,
+        _ => TeamRole::Member,
+    };
+
     // Add member
-    let member_role = body.role.as_deref().unwrap_or("member");
-    repo.add_member(team.id as i64, user.uuid, member_role)
+    repo.add_member(id, user.id, member_role)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to add member: {}", e)))?;
 
@@ -319,17 +290,18 @@ pub async fn remove_member(
 ) -> Result<Json<()>, ApiError> {
     let repo = state.teams();
 
-    let team = repo.find_by_id(id)
+    // Verify team exists
+    let _ = repo.find_by_id(id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch team: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Team not found"))?;
 
     // Verify user has permission
-    let role = repo.get_member_role(team.id as i64, auth.user_id)
+    let role = repo.get_member_role(id, auth.user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to check role: {}", e)))?;
 
-    let can_remove = auth.is_admin || matches!(role.as_deref(), Some("owner") | Some("admin"));
+    let can_remove = auth.is_admin || role.map(|r| r.can_manage_team()).unwrap_or(false);
 
     // Users can remove themselves
     let is_self = user_id == auth.user_id;
@@ -338,29 +310,27 @@ pub async fn remove_member(
         return Err(ApiError::forbidden("You don't have permission to remove members"));
     }
 
-    // Cannot remove the last owner
-    if role.as_deref() == Some("owner") {
-        let owner_count = repo.count_owners(team.id as i64)
+    // Get the role of user being removed
+    let target_role = repo.get_member_role(id, user_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to check target role: {}", e)))?;
+
+    // Cannot remove the last owner - would need to count owners
+    if target_role == Some(TeamRole::Owner) {
+        let members = repo.get_members(id)
             .await
             .map_err(|e| ApiError::internal(format!("Failed to count owners: {}", e)))?;
+
+        let owner_count = members.iter().filter(|m| m.role == TeamRole::Owner).count();
 
         if owner_count <= 1 {
             return Err(ApiError::bad_request("Cannot remove the last owner"));
         }
     }
 
-    repo.remove_member(team.id as i64, user_id)
+    repo.remove_member(id, user_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to remove member: {}", e)))?;
 
     Ok(Json(()))
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TeamMember {
-    pub user_id: Uuid,
-    pub email: String,
-    pub name: Option<String>,
-    pub role: String,
-    pub joined_at: chrono::DateTime<chrono::Utc>,
 }

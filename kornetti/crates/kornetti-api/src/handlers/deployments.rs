@@ -7,7 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
-use kornetti_core::models::{Deployment, DeploymentLog, DeploymentStatus};
+use kornetti_core::models::{Deployment, DeploymentStatus, DeploymentType, DeploymentLog, LogLevel};
 use crate::{state::{AppState, AuthContext}, ApiError};
 
 #[derive(Deserialize)]
@@ -26,7 +26,6 @@ pub struct ListDeploymentsQuery {
 pub struct DeploymentWithLogs {
     #[serde(flatten)]
     pub deployment: Deployment,
-    pub logs: Vec<DeploymentLog>,
 }
 
 #[derive(Serialize)]
@@ -51,13 +50,18 @@ pub async fn list(
 
     let deployments = if let Some(app_id) = query.application_id {
         // Verify application belongs to team
-        let app = state.applications().find_by_uuid(app_id)
+        let app = state.applications().find_by_id(app_id)
             .await
             .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
             .ok_or_else(|| ApiError::not_found("Application not found"))?;
 
         // Get project to verify team ownership
-        let project = state.projects().find_by_id_raw(app.project_id)
+        let env = state.projects().find_environment_by_id(app.environment_id)
+            .await
+            .map_err(|e| ApiError::internal(format!("Failed to fetch environment: {}", e)))?
+            .ok_or_else(|| ApiError::not_found("Environment not found"))?;
+
+        let project = state.projects().find_by_id(env.project_id)
             .await
             .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
             .ok_or_else(|| ApiError::not_found("Project not found"))?;
@@ -66,7 +70,7 @@ pub async fn list(
             return Err(ApiError::forbidden("Application belongs to another team"));
         }
 
-        repo.find_by_application(app.id as i64, limit, offset)
+        repo.find_by_application(app.id, limit, offset)
             .await
             .map_err(|e| ApiError::internal(format!("Failed to fetch deployments: {}", e)))?
     } else {
@@ -77,8 +81,9 @@ pub async fn list(
 
     // Filter by status if specified
     let deployments = if let Some(ref status) = query.status {
+        let target_status = parse_status(status);
         deployments.into_iter()
-            .filter(|d| d.status.as_str() == status)
+            .filter(|d| Some(d.status) == target_status)
             .collect()
     } else {
         deployments
@@ -95,18 +100,23 @@ pub async fn get(
 ) -> Result<Json<Deployment>, ApiError> {
     let repo = state.deployments();
 
-    let deployment = repo.find_by_uuid(id)
+    let deployment = repo.find_by_id(id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Deployment not found"))?;
 
-    // Verify team ownership via application -> project -> team
-    let app = state.applications().find_by_id_raw(deployment.application_id)
+    // Verify team ownership via application -> environment -> project -> team
+    let app = state.applications().find_by_id(deployment.application_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Application not found"))?;
 
-    let project = state.projects().find_by_id_raw(app.project_id)
+    let env = state.projects().find_environment_by_id(app.environment_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch environment: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Environment not found"))?;
+
+    let project = state.projects().find_by_id(env.project_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
@@ -124,33 +134,8 @@ pub async fn logs(
     Extension(auth): Extension<AuthContext>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<DeploymentLog>>, ApiError> {
-    let repo = state.deployments();
-
-    let deployment = repo.find_by_uuid(id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Deployment not found"))?;
-
-    // Verify team ownership
-    let app = state.applications().find_by_id_raw(deployment.application_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Application not found"))?;
-
-    let project = state.projects().find_by_id_raw(app.project_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Deployment belongs to another team"));
-    }
-
-    let logs = repo.get_logs(deployment.id as i64)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch logs: {}", e)))?;
-
-    Ok(Json(logs))
+    let deployment = get_deployment_with_auth(&state, id, &auth).await?;
+    Ok(Json(deployment.logs))
 }
 
 /// Cancel a running deployment
@@ -161,25 +146,7 @@ pub async fn cancel(
 ) -> Result<Json<Deployment>, ApiError> {
     let repo = state.deployments();
 
-    let mut deployment = repo.find_by_uuid(id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Deployment not found"))?;
-
-    // Verify team ownership
-    let app = state.applications().find_by_id_raw(deployment.application_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Application not found"))?;
-
-    let project = state.projects().find_by_id_raw(app.project_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Deployment belongs to another team"));
-    }
+    let mut deployment = get_deployment_with_auth(&state, id, &auth).await?;
 
     // Can only cancel in-progress deployments
     match deployment.status {
@@ -187,25 +154,16 @@ pub async fn cancel(
             deployment.status = DeploymentStatus::Cancelled;
             deployment.finished_at = Some(chrono::Utc::now());
 
-            let updated = repo.update(deployment)
+            // Add cancellation log
+            deployment.add_log(
+                LogLevel::Info,
+                format!("Deployment cancelled by user {}", auth.email),
+                Some("cancel".to_string()),
+            );
+
+            let updated = repo.update(&deployment)
                 .await
                 .map_err(|e| ApiError::internal(format!("Failed to cancel deployment: {}", e)))?;
-
-            // Add cancellation log
-            let log = DeploymentLog {
-                id: 0,
-                deployment_id: updated.id,
-                output: format!("Deployment cancelled by user {}", auth.email),
-                level: "info".to_string(),
-                order: 9999,
-                hidden: false,
-                created_at: chrono::Utc::now(),
-                updated_at: chrono::Utc::now(),
-            };
-
-            repo.add_log(log)
-                .await
-                .map_err(|e| ApiError::internal(format!("Failed to add log: {}", e)))?;
 
             Ok(Json(updated))
         }
@@ -222,12 +180,17 @@ pub async fn stats(
     let repo = state.deployments();
 
     // Verify application belongs to team
-    let app = state.applications().find_by_uuid(app_id)
+    let app = state.applications().find_by_id(app_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Application not found"))?;
 
-    let project = state.projects().find_by_id_raw(app.project_id)
+    let env = state.projects().find_environment_by_id(app.environment_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch environment: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Environment not found"))?;
+
+    let project = state.projects().find_by_id(env.project_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
@@ -236,7 +199,7 @@ pub async fn stats(
         return Err(ApiError::forbidden("Application belongs to another team"));
     }
 
-    let stats = repo.get_stats(app.id as i64)
+    let stats = repo.get_stats(app.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch stats: {}", e)))?;
 
@@ -251,70 +214,33 @@ pub async fn retry(
 ) -> Result<Json<Deployment>, ApiError> {
     let repo = state.deployments();
 
-    let original = repo.find_by_uuid(id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Deployment not found"))?;
+    let original = get_deployment_with_auth(&state, id, &auth).await?;
 
-    // Verify team ownership
-    let app = state.applications().find_by_id_raw(original.application_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Application not found"))?;
-
-    let project = state.projects().find_by_id_raw(app.project_id)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
-        .ok_or_else(|| ApiError::not_found("Project not found"))?;
-
-    if project.team_id != auth.team_id && !auth.is_admin {
-        return Err(ApiError::forbidden("Deployment belongs to another team"));
-    }
-
-    // Can only retry failed deployments
+    // Can only retry failed or cancelled deployments
     if !matches!(original.status, DeploymentStatus::Failed | DeploymentStatus::Cancelled) {
         return Err(ApiError::bad_request("Can only retry failed or cancelled deployments"));
     }
 
     // Create new deployment with same parameters
-    let new_deployment = Deployment {
-        id: 0,
-        uuid: Uuid::new_v4(),
-        application_id: original.application_id,
-        status: DeploymentStatus::Queued,
-        commit: original.commit.clone(),
-        commit_message: original.commit_message.clone(),
-        branch: original.branch.clone(),
-        pull_request_id: original.pull_request_id,
-        force_rebuild: original.force_rebuild,
-        rollback: false,
-        only_this_server: original.only_this_server,
-        server_id: original.server_id,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-        started_at: None,
-        finished_at: None,
-    };
-
-    let created = repo.create(new_deployment)
-        .await
-        .map_err(|e| ApiError::internal(format!("Failed to create deployment: {}", e)))?;
+    let mut new_deployment = Deployment::new(
+        original.application_id,
+        original.server_id,
+        DeploymentType::Redeploy,
+    );
+    new_deployment.commit_sha = original.commit_sha.clone();
+    new_deployment.commit_message = original.commit_message.clone();
+    new_deployment.triggered_by = Some(auth.user_id);
 
     // Add initial log
-    let log = DeploymentLog {
-        id: 0,
-        deployment_id: created.id,
-        output: format!("Deployment queued (retry of {})", original.uuid),
-        level: "info".to_string(),
-        order: 0,
-        hidden: false,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    };
+    new_deployment.add_log(
+        LogLevel::Info,
+        format!("Deployment queued (retry of {})", original.id),
+        Some("queue".to_string()),
+    );
 
-    repo.add_log(log)
+    let created = repo.create(&new_deployment)
         .await
-        .map_err(|e| ApiError::internal(format!("Failed to add log: {}", e)))?;
+        .map_err(|e| ApiError::internal(format!("Failed to create deployment: {}", e)))?;
 
     // TODO: Trigger deployment job via queue
 
@@ -330,12 +256,17 @@ pub async fn current(
     let repo = state.deployments();
 
     // Verify application belongs to team
-    let app = state.applications().find_by_uuid(app_id)
+    let app = state.applications().find_by_id(app_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Application not found"))?;
 
-    let project = state.projects().find_by_id_raw(app.project_id)
+    let env = state.projects().find_environment_by_id(app.environment_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch environment: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Environment not found"))?;
+
+    let project = state.projects().find_by_id(env.project_id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
         .ok_or_else(|| ApiError::not_found("Project not found"))?;
@@ -344,9 +275,56 @@ pub async fn current(
         return Err(ApiError::forbidden("Application belongs to another team"));
     }
 
-    let latest = repo.find_latest_by_application(app.id as i64)
+    let latest = repo.find_latest_by_application(app.id)
         .await
         .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?;
 
     Ok(Json(latest))
+}
+
+// Helper function to get deployment with authorization check
+async fn get_deployment_with_auth(
+    state: &AppState,
+    id: Uuid,
+    auth: &AuthContext,
+) -> Result<Deployment, ApiError> {
+    let repo = state.deployments();
+
+    let deployment = repo.find_by_id(id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch deployment: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Deployment not found"))?;
+
+    // Verify team ownership
+    let app = state.applications().find_by_id(deployment.application_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch application: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Application not found"))?;
+
+    let env = state.projects().find_environment_by_id(app.environment_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch environment: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Environment not found"))?;
+
+    let project = state.projects().find_by_id(env.project_id)
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to fetch project: {}", e)))?
+        .ok_or_else(|| ApiError::not_found("Project not found"))?;
+
+    if project.team_id != auth.team_id && !auth.is_admin {
+        return Err(ApiError::forbidden("Deployment belongs to another team"));
+    }
+
+    Ok(deployment)
+}
+
+fn parse_status(s: &str) -> Option<DeploymentStatus> {
+    match s.to_lowercase().as_str() {
+        "queued" => Some(DeploymentStatus::Queued),
+        "in_progress" | "inprogress" => Some(DeploymentStatus::InProgress),
+        "finished" | "success" | "successful" => Some(DeploymentStatus::Finished),
+        "failed" | "error" => Some(DeploymentStatus::Failed),
+        "cancelled" | "canceled" => Some(DeploymentStatus::Cancelled),
+        _ => None,
+    }
 }
