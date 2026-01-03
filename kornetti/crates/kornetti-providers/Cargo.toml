@@ -1,0 +1,30 @@
+[package]
+name = "kornetti-providers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Cloud provider integrations for Kornetti (Vultr, Hetzner, DigitalOcean, AWS, Linode, GCP, Azure)"
+
+[dependencies]
+kornetti-core = { path = "../kornetti-core" }
+
+tokio.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+reqwest.workspace = true
+url.workspace = true
+base64.workspace = true
+
+# AWS SDK
+aws-sdk-ec2.workspace = true
+aws-sdk-s3.workspace = true
+aws-config.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true
+wiremock.workspace = true
+tokio = { workspace = true, features = ["test-util"] }

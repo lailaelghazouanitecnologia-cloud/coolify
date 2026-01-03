@@ -1,0 +1,22 @@
+[package]
+name = "kornetti-ssh"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SSH client and remote execution for Kornetti"
+
+[dependencies]
+kornetti-core = { path = "../kornetti-core" }
+
+tokio.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+
+# SSH
+russh.workspace = true
+russh-keys.workspace = true
+
+[dev-dependencies]
+mockall.workspace = true

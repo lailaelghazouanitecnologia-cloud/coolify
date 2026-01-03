@@ -1,0 +1,39 @@
+[package]
+name = "kornetti-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "REST API server for Kornetti"
+
+[dependencies]
+kornetti-core = { path = "../kornetti-core" }
+kornetti-providers = { path = "../kornetti-providers" }
+kornetti-ssh = { path = "../kornetti-ssh" }
+kornetti-docker = { path = "../kornetti-docker" }
+
+tokio.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+
+# Web framework
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+# Database
+sqlx.workspace = true
+redis.workspace = true
+
+# Auth
+jsonwebtoken = "9.3"
+argon2 = "0.5"
+
+[dev-dependencies]
+mockall.workspace = true
+wiremock.workspace = true

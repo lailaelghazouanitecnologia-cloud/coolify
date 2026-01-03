@@ -1,0 +1,46 @@
+# Kornetti Configuration Example
+# Copy this file to kornetti.toml and customize
+
+[server]
+host = "0.0.0.0"
+port = 8080
+# workers = 4  # Optional: number of worker threads
+
+[database]
+url = "postgres://kornetti:password@localhost:5432/kornetti"
+max_connections = 10
+min_connections = 2
+
+[redis]
+url = "redis://localhost:6379"
+pool_size = 10
+
+# Cloud Provider Configuration
+# Only configure the providers you plan to use
+
+[providers.vultr]
+api_key = "your-vultr-api-key"
+
+[providers.hetzner]
+api_token = "your-hetzner-api-token"
+
+[providers.digitalocean]
+api_token = "your-digitalocean-api-token"
+
+[providers.aws]
+access_key_id = "your-aws-access-key"
+secret_access_key = "your-aws-secret-key"
+region = "us-east-1"
+
+[providers.linode]
+api_token = "your-linode-api-token"
+
+# [providers.gcp]
+# project_id = "your-gcp-project"
+# credentials_json = "/path/to/credentials.json"
+
+# [providers.azure]
+# subscription_id = "your-subscription-id"
+# tenant_id = "your-tenant-id"
+# client_id = "your-client-id"
+# client_secret = "your-client-secret"

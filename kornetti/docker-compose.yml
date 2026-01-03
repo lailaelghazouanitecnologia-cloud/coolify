@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  kornetti:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://kornetti:kornetti@postgres:5432/kornetti
+      - REDIS_URL=redis://redis:6379
+      - RUST_LOG=info
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./kornetti.toml:/app/kornetti.toml:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://kornetti:8080/api/v1
+    depends_on:
+      - kornetti
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: kornetti
+      POSTGRES_PASSWORD: kornetti
+      POSTGRES_DB: kornetti
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  redis_data:

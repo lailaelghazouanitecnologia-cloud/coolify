@@ -1,0 +1,33 @@
+[package]
+name = "kornetti-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Command-line interface for Kornetti"
+
+[[bin]]
+name = "kornetti"
+path = "src/main.rs"
+
+[dependencies]
+kornetti-core = { path = "../kornetti-core" }
+kornetti-api = { path = "../kornetti-api" }
+kornetti-providers = { path = "../kornetti-providers" }
+
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# CLI
+clap.workspace = true
+
+# Configuration
+config.workspace = true
+dotenvy.workspace = true
+
+# Database
+sqlx.workspace = true
