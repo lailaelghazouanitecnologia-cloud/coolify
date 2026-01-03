@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, StandaloneDatabase};
 use super::database_configuration_dir;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct RestartDatabaseInput<'a> {
     pub server: &'a Server,
@@ -20,11 +20,11 @@ pub struct RestartDatabaseInput<'a> {
 }
 
 pub struct RestartDatabase {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl RestartDatabase {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

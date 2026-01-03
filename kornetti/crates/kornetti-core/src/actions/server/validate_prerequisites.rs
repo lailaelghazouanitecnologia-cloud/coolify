@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 
 use crate::models::Server;
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Prerequisite check results
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,11 +51,11 @@ pub struct ValidatePrerequisitesInput<'a> {
 
 /// Action to validate server prerequisites
 pub struct ValidatePrerequisites {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl ValidatePrerequisites {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

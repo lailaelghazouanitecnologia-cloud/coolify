@@ -10,7 +10,7 @@ use tracing::{info, instrument, warn};
 use crate::models::Server;
 use super::{OsType, ServerValidation, DOCKER_MINIMUM_VERSION, DOCKER_COMPOSE_MINIMUM_VERSION};
 use crate::actions::{Action, ActionError, ActionResult};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Input for server validation
 pub struct ValidateServerInput<'a> {
@@ -19,11 +19,11 @@ pub struct ValidateServerInput<'a> {
 
 /// Action to validate a server's configuration
 pub struct ValidateServer {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl ValidateServer {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, StandaloneDatabase};
 use super::{DatabaseConfig, DatabaseType, ResourceLimits, generate_compose, database_configuration_dir};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Redis specific configuration
 #[derive(Debug, Clone)]
@@ -49,11 +49,11 @@ pub struct StartRedisInput<'a> {
 
 /// Action to start a Redis database
 pub struct StartRedis {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StartRedis {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

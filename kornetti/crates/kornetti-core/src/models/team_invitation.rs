@@ -7,40 +7,8 @@ use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Team member role
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TeamRole {
-    Owner,
-    Admin,
-    Member,
-    Viewer,
-}
-
-impl TeamRole {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            TeamRole::Owner => "owner",
-            TeamRole::Admin => "admin",
-            TeamRole::Member => "member",
-            TeamRole::Viewer => "viewer",
-        }
-    }
-
-    pub fn can_manage_team(&self) -> bool {
-        matches!(self, TeamRole::Owner | TeamRole::Admin)
-    }
-
-    pub fn can_deploy(&self) -> bool {
-        matches!(self, TeamRole::Owner | TeamRole::Admin | TeamRole::Member)
-    }
-}
-
-impl Default for TeamRole {
-    fn default() -> Self {
-        TeamRole::Member
-    }
-}
+// Re-use TeamRole from team module to avoid duplication
+pub use super::team::TeamRole;
 
 /// Invitation status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -153,34 +121,5 @@ impl TeamInvitation {
     }
 }
 
-/// Team member (after invitation is accepted)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TeamMember {
-    pub id: Uuid,
-    pub team_id: Uuid,
-    pub user_id: Uuid,
-    pub role: TeamRole,
-    pub joined_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-impl TeamMember {
-    pub fn new(team_id: Uuid, user_id: Uuid, role: TeamRole) -> Self {
-        let now = Utc::now();
-        Self {
-            id: Uuid::new_v4(),
-            team_id,
-            user_id,
-            role,
-            joined_at: now,
-            created_at: now,
-            updated_at: now,
-        }
-    }
-
-    /// Create owner membership
-    pub fn owner(team_id: Uuid, user_id: Uuid) -> Self {
-        Self::new(team_id, user_id, TeamRole::Owner)
-    }
-}
+// Re-use TeamMember from team module to avoid duplication
+pub use super::team::TeamMember;

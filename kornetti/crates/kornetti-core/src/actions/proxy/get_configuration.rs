@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::Server;
 use super::{ProxyType, proxy_path, traefik_path, caddy_path};
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Proxy status and configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,11 +30,11 @@ pub struct GetProxyConfigurationInput<'a> {
 }
 
 pub struct GetProxyConfiguration {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl GetProxyConfiguration {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

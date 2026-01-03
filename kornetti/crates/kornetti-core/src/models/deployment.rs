@@ -28,6 +28,40 @@ pub enum DeploymentStatus {
     Finished,
     Failed,
     Cancelled,
+    CancelledByUser,
+}
+
+impl DeploymentStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DeploymentStatus::Queued => "queued",
+            DeploymentStatus::InProgress => "in_progress",
+            DeploymentStatus::Finished => "finished",
+            DeploymentStatus::Failed => "failed",
+            DeploymentStatus::Cancelled => "cancelled",
+            DeploymentStatus::CancelledByUser => "cancelled_by_user",
+        }
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        matches!(
+            self,
+            DeploymentStatus::Finished
+                | DeploymentStatus::Failed
+                | DeploymentStatus::Cancelled
+                | DeploymentStatus::CancelledByUser
+        )
+    }
+
+    pub fn is_active(&self) -> bool {
+        matches!(self, DeploymentStatus::Queued | DeploymentStatus::InProgress)
+    }
+}
+
+impl Default for DeploymentStatus {
+    fn default() -> Self {
+        DeploymentStatus::Queued
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -89,10 +123,7 @@ impl Deployment {
     }
 
     pub fn is_finished(&self) -> bool {
-        matches!(
-            self.status,
-            DeploymentStatus::Finished | DeploymentStatus::Failed | DeploymentStatus::Cancelled
-        )
+        self.status.is_terminal()
     }
 
     pub fn duration_seconds(&self) -> Option<i64> {

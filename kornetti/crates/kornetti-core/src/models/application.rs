@@ -71,7 +71,7 @@ pub struct DeployConfig {
     pub resources: ResourceLimits,
     pub ports: Vec<PortMapping>,
     pub volumes: Vec<VolumeMapping>,
-    pub environment_variables: Vec<EnvironmentVariable>,
+    pub environment_variables: Vec<EnvVar>,
     pub labels: Vec<Label>,
 }
 
@@ -116,8 +116,9 @@ pub struct VolumeMapping {
     pub volume_name: Option<String>,
 }
 
+/// Simple environment variable for deploy config (embedded)
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EnvironmentVariable {
+pub struct EnvVar {
     pub key: String,
     pub value: String,
     pub is_secret: bool,

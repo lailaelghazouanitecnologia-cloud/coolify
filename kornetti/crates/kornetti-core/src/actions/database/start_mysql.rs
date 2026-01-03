@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, StandaloneDatabase};
 use super::{DatabaseConfig, DatabaseType, ResourceLimits, InitScript, generate_compose, database_configuration_dir};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// MySQL specific configuration
 #[derive(Debug, Clone)]
@@ -52,11 +52,11 @@ pub struct StartMysqlInput<'a> {
 
 /// Action to start a MySQL database
 pub struct StartMysql {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StartMysql {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

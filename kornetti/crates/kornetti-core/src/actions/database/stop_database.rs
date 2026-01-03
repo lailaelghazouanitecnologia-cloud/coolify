@@ -10,7 +10,7 @@ use tracing::{info, instrument, warn};
 use crate::models::{Server, StandaloneDatabase};
 use super::database_configuration_dir;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Options for stopping a database
 #[derive(Debug, Clone)]
@@ -40,11 +40,11 @@ pub struct StopDatabaseInput<'a> {
 }
 
 pub struct StopDatabase {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StopDatabase {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

@@ -7,50 +7,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Deployment status
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DeploymentStatus {
-    Queued,
-    InProgress,
-    Finished,
-    Failed,
-    Cancelled,
-    CancelledByUser,
-}
-
-impl DeploymentStatus {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            DeploymentStatus::Queued => "queued",
-            DeploymentStatus::InProgress => "in_progress",
-            DeploymentStatus::Finished => "finished",
-            DeploymentStatus::Failed => "failed",
-            DeploymentStatus::Cancelled => "cancelled",
-            DeploymentStatus::CancelledByUser => "cancelled_by_user",
-        }
-    }
-
-    pub fn is_terminal(&self) -> bool {
-        matches!(
-            self,
-            DeploymentStatus::Finished
-                | DeploymentStatus::Failed
-                | DeploymentStatus::Cancelled
-                | DeploymentStatus::CancelledByUser
-        )
-    }
-
-    pub fn is_active(&self) -> bool {
-        matches!(self, DeploymentStatus::Queued | DeploymentStatus::InProgress)
-    }
-}
-
-impl Default for DeploymentStatus {
-    fn default() -> Self {
-        DeploymentStatus::Queued
-    }
-}
+// Re-use DeploymentStatus from deployment module to avoid duplication
+pub use super::deployment::DeploymentStatus;
 
 /// Git source type for the deployment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

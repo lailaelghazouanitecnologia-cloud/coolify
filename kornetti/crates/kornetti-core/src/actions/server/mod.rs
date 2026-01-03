@@ -13,7 +13,7 @@ mod check_updates;
 
 pub use install_docker::InstallDocker;
 pub use validate_server::ValidateServer;
-pub use validate_prerequisites::ValidatePrerequisites;
+pub use validate_prerequisites::{ValidatePrerequisites, ValidatePrerequisitesInput, PrerequisitesResult};
 pub use install_prerequisites::InstallPrerequisites;
 pub use cleanup_docker::CleanupDocker;
 pub use run_command::RunCommand;

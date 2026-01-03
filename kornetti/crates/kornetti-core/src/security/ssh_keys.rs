@@ -229,7 +229,7 @@ pub fn generate_ssh_key(
     let key_pair = match key_type {
         KeyType::Ed25519 => {
             russh_keys::key::KeyPair::generate_ed25519()
-                .map_err(|e| SecurityError::Encryption(format!("Failed to generate Ed25519 key: {}", e)))?
+                .ok_or_else(|| SecurityError::Encryption("Failed to generate Ed25519 key".to_string()))?
         }
         KeyType::Rsa => {
             russh_keys::key::KeyPair::generate_rsa(4096, russh_keys::key::SignatureHash::SHA2_256)
@@ -238,7 +238,7 @@ pub fn generate_ssh_key(
         KeyType::Ecdsa => {
             // Fall back to Ed25519 as russh-keys has better support
             russh_keys::key::KeyPair::generate_ed25519()
-                .map_err(|e| SecurityError::Encryption(format!("Failed to generate key: {}", e)))?
+                .ok_or_else(|| SecurityError::Encryption("Failed to generate key".to_string()))?
         }
     };
 

@@ -11,7 +11,7 @@ use tracing::{info, instrument, warn};
 use crate::models::Server;
 use super::{OsType, DOCKER_MINIMUM_VERSION};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Input for Docker installation
 pub struct InstallDockerInput<'a> {
@@ -22,12 +22,12 @@ pub struct InstallDockerInput<'a> {
 
 /// Action to install Docker Engine on a server
 pub struct InstallDocker {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
     docker_version: String,
 }
 
 impl InstallDocker {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self {
             ssh,
             docker_version: DOCKER_MINIMUM_VERSION.to_string(),

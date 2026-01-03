@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 
 use crate::models::{Server, Application};
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Parsed compose file information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,11 +50,11 @@ pub struct LoadComposeFileInput<'a> {
 }
 
 pub struct LoadComposeFile {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl LoadComposeFile {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

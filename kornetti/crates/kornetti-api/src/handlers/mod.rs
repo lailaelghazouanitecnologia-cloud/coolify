@@ -13,3 +13,7 @@ pub mod services;
 pub mod environment_variables;
 pub mod private_keys;
 pub mod notifications;
+pub mod tags;
+pub mod backups;
+pub mod team_invitations;
+pub mod settings;

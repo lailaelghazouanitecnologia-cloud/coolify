@@ -11,7 +11,7 @@ use tracing::{info, instrument, warn};
 use crate::models::Server;
 use super::ProxyType;
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Proxy health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,11 +46,11 @@ pub struct CheckProxyInput<'a> {
 }
 
 pub struct CheckProxy {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl CheckProxy {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

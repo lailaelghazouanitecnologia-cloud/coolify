@@ -10,7 +10,7 @@ use tracing::{info, instrument, warn};
 use crate::models::{Server, Service};
 use super::service_configuration_dir;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct DeleteServiceInput<'a> {
     pub server: &'a Server,
@@ -22,11 +22,11 @@ pub struct DeleteServiceInput<'a> {
 }
 
 pub struct DeleteService {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl DeleteService {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

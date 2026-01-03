@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, Service};
 use super::service_configuration_dir;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct StopServiceInput<'a> {
     pub server: &'a Server,
@@ -20,11 +20,11 @@ pub struct StopServiceInput<'a> {
 }
 
 pub struct StopService {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StopService {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

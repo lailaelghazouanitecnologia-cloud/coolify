@@ -9,7 +9,7 @@ use tracing::{info, instrument, warn};
 
 use crate::models::{Server, Application};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Options for stopping an application
 #[derive(Debug, Clone)]
@@ -42,11 +42,11 @@ pub struct StopApplicationInput<'a> {
 }
 
 pub struct StopApplication {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StopApplication {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

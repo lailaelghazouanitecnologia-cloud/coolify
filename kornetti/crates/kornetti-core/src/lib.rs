@@ -21,9 +21,11 @@ pub mod repositories;
 pub mod actions;
 pub mod compose;
 pub mod security;
+pub mod ssh_stub;
 
 pub use error::{Error, Result};
 pub use config::Config;
 pub use repositories::Database;
 pub use compose::{ComposeFile, Service as ComposeService, ComposeBuilder};
 pub use security::{Encryptor, EncryptionKey, validate_shell_safe_path, sanitize_string};
+pub use ssh_stub::{SshClient, SshConfig, SshError, SshResult, CommandOutput, SharedSshClient};

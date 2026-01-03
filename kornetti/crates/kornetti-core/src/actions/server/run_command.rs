@@ -11,7 +11,7 @@ use tracing::{info, instrument, warn};
 
 use crate::models::Server;
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Command execution options
 #[derive(Debug, Clone)]
@@ -65,11 +65,11 @@ pub struct RunCommandInput<'a> {
 
 /// Action to run a command on a server
 pub struct RunCommand {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl RunCommand {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

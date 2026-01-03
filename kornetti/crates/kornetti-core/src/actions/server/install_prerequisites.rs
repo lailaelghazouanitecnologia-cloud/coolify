@@ -10,7 +10,7 @@ use tracing::{info, instrument, warn};
 use crate::models::Server;
 use super::{OsType, ValidatePrerequisites, ValidatePrerequisitesInput};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Input for installing prerequisites
 pub struct InstallPrerequisitesInput<'a> {
@@ -19,11 +19,11 @@ pub struct InstallPrerequisitesInput<'a> {
 
 /// Action to install required tools on a server
 pub struct InstallPrerequisites {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl InstallPrerequisites {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

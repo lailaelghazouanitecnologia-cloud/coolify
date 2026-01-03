@@ -10,7 +10,7 @@ use tracing::{info, instrument, warn};
 
 use crate::models::Server;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Cleanup options
 #[derive(Debug, Clone, Default)]
@@ -77,11 +77,11 @@ pub struct CleanupDockerInput<'a> {
 
 /// Action to clean up Docker resources
 pub struct CleanupDocker {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl CleanupDocker {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

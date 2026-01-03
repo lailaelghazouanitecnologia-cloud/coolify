@@ -10,18 +10,18 @@ use tracing::{info, instrument};
 use crate::models::Server;
 use super::proxy_path;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct StopProxyInput<'a> {
     pub server: &'a Server,
 }
 
 pub struct StopProxy {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StopProxy {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

@@ -109,6 +109,52 @@ pub fn api_routes() -> Router<Arc<AppState>> {
         .route("/webhooks/github/:app_id", post(handlers::webhooks::github_app))
         .route("/webhooks/gitlab", post(handlers::webhooks::gitlab))
         .route("/webhooks/bitbucket", post(handlers::webhooks::bitbucket))
+
+        // Tags
+        .route("/tags", get(handlers::tags::list))
+        .route("/tags", post(handlers::tags::create))
+        .route("/tags/:id", get(handlers::tags::get))
+        .route("/tags/:id", put(handlers::tags::update))
+        .route("/tags/:id", delete(handlers::tags::delete))
+        .route("/tags/:id/attach", post(handlers::tags::attach))
+        .route("/tags/:id/detach/:resource_type/:resource_id", delete(handlers::tags::detach))
+        .route("/tags/:id/resources", get(handlers::tags::resources))
+
+        // Backups
+        .route("/backups", get(handlers::backups::list))
+        .route("/backups", post(handlers::backups::create))
+        .route("/backups/:id", get(handlers::backups::get))
+        .route("/backups/:id", put(handlers::backups::update))
+        .route("/backups/:id", delete(handlers::backups::delete))
+        .route("/backups/:id/run", post(handlers::backups::run))
+        .route("/backups/:id/executions", get(handlers::backups::executions))
+        .route("/backups/:backup_id/executions/:execution_id", get(handlers::backups::get_execution))
+        .route("/backups/:backup_id/executions/:execution_id/download", get(handlers::backups::download))
+        .route("/backups/:backup_id/executions/:execution_id/restore", post(handlers::backups::restore))
+
+        // Team Invitations
+        .route("/team/invitations", get(handlers::team_invitations::list))
+        .route("/team/invitations", post(handlers::team_invitations::create))
+        .route("/team/invitations/:id", get(handlers::team_invitations::get))
+        .route("/team/invitations/:id/resend", post(handlers::team_invitations::resend))
+        .route("/team/invitations/:id", delete(handlers::team_invitations::cancel))
+        .route("/team/members", get(handlers::team_invitations::list_members))
+        .route("/team/members/:user_id", put(handlers::team_invitations::update_member))
+        .route("/team/members/:user_id", delete(handlers::team_invitations::remove_member))
+
+        // Settings
+        .route("/settings", get(handlers::settings::get_instance))
+        .route("/settings", put(handlers::settings::update_instance))
+        .route("/settings/s3", get(handlers::settings::list_s3_storages))
+        .route("/settings/s3", post(handlers::settings::create_s3_storage))
+        .route("/settings/s3/:id", get(handlers::settings::get_s3_storage))
+        .route("/settings/s3/:id", put(handlers::settings::update_s3_storage))
+        .route("/settings/s3/:id", delete(handlers::settings::delete_s3_storage))
+        .route("/settings/s3/:id/test", post(handlers::settings::test_s3_storage))
+        .route("/settings/license", get(handlers::settings::get_license))
+        .route("/settings/license", put(handlers::settings::update_license))
+        .route("/settings/status", get(handlers::settings::get_system_status))
+        .route("/settings/cleanup", post(handlers::settings::trigger_cleanup))
 }
 
 /// Webhook routes that don't require authentication
@@ -118,4 +164,14 @@ pub fn webhook_routes() -> Router<Arc<AppState>> {
         .route("/source/github/events/:app_id", post(handlers::webhooks::github_app))
         .route("/source/gitlab/events", post(handlers::webhooks::gitlab))
         .route("/source/bitbucket/events", post(handlers::webhooks::bitbucket))
+}
+
+/// Public routes that don't require authentication
+pub fn public_routes() -> Router<Arc<AppState>> {
+    Router::new()
+        // Invitation acceptance/decline (public links in emails)
+        .route("/invitations/:token/accept", post(handlers::team_invitations::accept))
+        .route("/invitations/:token/decline", post(handlers::team_invitations::decline))
+        // Health check
+        .route("/health", get(handlers::health::health_check))
 }

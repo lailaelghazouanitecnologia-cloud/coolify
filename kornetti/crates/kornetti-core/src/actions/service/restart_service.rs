@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, Service};
 use super::service_configuration_dir;
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct RestartServiceInput<'a> {
     pub server: &'a Server,
@@ -18,11 +18,11 @@ pub struct RestartServiceInput<'a> {
 }
 
 pub struct RestartService {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl RestartService {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }

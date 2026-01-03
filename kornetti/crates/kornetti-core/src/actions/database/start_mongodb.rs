@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, StandaloneDatabase};
 use super::{DatabaseConfig, DatabaseType, ResourceLimits, generate_compose, database_configuration_dir};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// MongoDB specific configuration
 #[derive(Debug, Clone)]
@@ -43,11 +43,11 @@ pub struct StartMongodbInput<'a> {
 
 /// Action to start a MongoDB database
 pub struct StartMongodb {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StartMongodb {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

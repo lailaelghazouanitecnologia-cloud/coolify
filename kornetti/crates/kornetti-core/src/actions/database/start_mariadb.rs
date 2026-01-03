@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::{Server, StandaloneDatabase};
 use super::{DatabaseConfig, DatabaseType, ResourceLimits, InitScript, generate_compose, database_configuration_dir};
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// MariaDB specific configuration (similar to MySQL)
 #[derive(Debug, Clone)]
@@ -44,11 +44,11 @@ pub struct StartMariadbInput<'a> {
 }
 
 pub struct StartMariadb {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StartMariadb {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

@@ -11,7 +11,7 @@ use tracing::{info, instrument};
 use crate::models::Server;
 use super::OsType;
 use crate::actions::{Action, ActionError};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 /// Update check results
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,11 +55,11 @@ pub struct CheckUpdatesInput<'a> {
 
 /// Action to check for available updates
 pub struct CheckUpdates {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl CheckUpdates {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 

@@ -14,7 +14,7 @@ use super::{
     generate_caddy_compose, generate_caddyfile,
 };
 use crate::actions::{Action, ActionError, ActionResult, CommandBuilder};
-use kornetti_ssh::SshClient;
+use crate::ssh_stub::SshClient;
 
 pub struct StartProxyInput<'a> {
     pub server: &'a Server,
@@ -24,11 +24,11 @@ pub struct StartProxyInput<'a> {
 }
 
 pub struct StartProxy {
-    ssh: Arc<SshClient>,
+    ssh: Arc<dyn SshClient>,
 }
 
 impl StartProxy {
-    pub fn new(ssh: Arc<SshClient>) -> Self {
+    pub fn new(ssh: Arc<dyn SshClient>) -> Self {
         Self { ssh }
     }
 }
