@@ -9,6 +9,9 @@ pub mod team;
 pub mod user;
 pub mod deployment;
 pub mod database;
+pub mod private_key;
+pub mod environment_variable;
+pub mod notification;
 
 pub use server::ServerRepository;
 pub use application::ApplicationRepository;
@@ -17,6 +20,9 @@ pub use team::TeamRepository;
 pub use user::UserRepository;
 pub use deployment::DeploymentRepository;
 pub use database::DatabaseRepository;
+pub use private_key::PrivateKeyRepository;
+pub use environment_variable::EnvironmentVariableRepository;
+pub use notification::{NotificationRepository, NotificationSettings, NotificationTypeSettings, NotificationEvent};
 
 use sqlx::PgPool;
 
