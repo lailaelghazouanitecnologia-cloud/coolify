@@ -8,3 +8,8 @@ pub mod projects;
 pub mod applications;
 pub mod deployments;
 pub mod databases;
+pub mod webhooks;
+pub mod services;
+pub mod environment_variables;
+pub mod private_keys;
+pub mod notifications;
