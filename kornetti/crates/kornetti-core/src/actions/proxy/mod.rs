@@ -1,18 +1,23 @@
 //! Proxy Actions
 //!
-//! Actions for managing reverse proxy servers (Traefik, Caddy).
+//! Actions for managing reverse proxy servers (Traefik, Caddy, Nginx).
 
 mod start_proxy;
 mod stop_proxy;
 mod save_configuration;
 mod get_configuration;
 mod check_proxy;
+pub mod nginx_config;
 
 pub use start_proxy::StartProxy;
 pub use stop_proxy::StopProxy;
 pub use save_configuration::SaveProxyConfiguration;
 pub use get_configuration::GetProxyConfiguration;
 pub use check_proxy::CheckProxy;
+pub use nginx_config::{
+    NginxServerBlock, NginxUpstream, NginxLocation, UpstreamServer, LoadBalancing,
+    generate_nginx_config, generate_nginx_upstream, generate_nginx_main_config, generate_nginx_compose,
+};
 
 use serde::{Deserialize, Serialize};
 

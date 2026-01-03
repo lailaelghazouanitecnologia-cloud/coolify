@@ -5,10 +5,14 @@
 mod stop_application;
 mod generate_config;
 mod load_compose;
+mod deploy_application;
+mod restart_application;
 
 pub use stop_application::StopApplication;
 pub use generate_config::GenerateConfig;
 pub use load_compose::LoadComposeFile;
+pub use deploy_application::{DeployApplication, DeployApplicationInput, DeployApplicationOutput};
+pub use restart_application::{RestartApplication, RestartApplicationInput, RestartApplicationOutput};
 
 use serde::{Deserialize, Serialize};
 
