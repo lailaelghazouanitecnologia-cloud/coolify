@@ -9,13 +9,17 @@ description = "Docker client and container orchestration for Kornetti"
 kornetti-core = { path = "../kornetti-core" }
 kornetti-ssh = { path = "../kornetti-ssh" }
 
-tokio.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }
 async-trait.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+futures.workspace = true
 
 # Docker
 bollard.workspace = true

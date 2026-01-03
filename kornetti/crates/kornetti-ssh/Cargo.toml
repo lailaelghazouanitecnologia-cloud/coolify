@@ -3,16 +3,23 @@ name = "kornetti-ssh"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "SSH client and remote execution for Kornetti"
+description = "SSH client with connection multiplexing, retry logic, and command batching"
 
 [dependencies]
 kornetti-core = { path = "../kornetti-core" }
 
-tokio.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "process"] }
 async-trait.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+futures.workspace = true
+dashmap.workspace = true
+parking_lot.workspace = true
+base64.workspace = true
+rand.workspace = true
 
 # SSH
 russh.workspace = true

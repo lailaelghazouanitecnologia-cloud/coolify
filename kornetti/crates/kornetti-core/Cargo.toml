@@ -17,6 +17,7 @@ uuid.workspace = true
 chrono.workspace = true
 url.workspace = true
 regex.workspace = true
+sqlx = { workspace = true, features = ["migrate"] }
 
 [dev-dependencies]
 mockall.workspace = true
