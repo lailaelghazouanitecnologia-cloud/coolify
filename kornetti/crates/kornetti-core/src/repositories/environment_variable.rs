@@ -16,6 +16,10 @@ struct EnvVarRow {
     is_secret: bool,
     is_build: bool,
     is_preview: bool,
+    is_multiline: Option<bool>,
+    is_shown_once: Option<bool>,
+    #[sqlx(rename = "sort_order")]
+    order: Option<i32>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -31,6 +35,9 @@ impl From<EnvVarRow> for EnvironmentVariable {
             is_secret: row.is_secret,
             is_build_time: row.is_build,
             is_preview: row.is_preview,
+            is_multiline: row.is_multiline.unwrap_or(false),
+            is_shown_once: row.is_shown_once.unwrap_or(false),
+            order: row.order.unwrap_or(0),
             created_at: row.created_at,
             updated_at: row.updated_at,
         }
@@ -42,6 +49,7 @@ fn parse_resource_type(s: &str) -> ResourceType {
         "application" => ResourceType::Application,
         "database" => ResourceType::Database,
         "service" => ResourceType::Service,
+        "shared_variable" => ResourceType::SharedVariable,
         _ => ResourceType::Application,
     }
 }
@@ -51,6 +59,7 @@ fn resource_type_to_string(rt: &ResourceType) -> &'static str {
         ResourceType::Application => "application",
         ResourceType::Database => "database",
         ResourceType::Service => "service",
+        ResourceType::SharedVariable => "shared_variable",
     }
 }
 

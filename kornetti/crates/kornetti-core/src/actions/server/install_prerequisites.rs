@@ -61,19 +61,19 @@ impl InstallPrerequisites {
     }
 
     /// Map tool names to package names for different distros
-    fn get_package_name(os_type: OsType, tool: &str) -> &'static str {
+    fn get_package_name(os_type: OsType, tool: &str) -> String {
         match (os_type, tool) {
-            (_, "curl") => "curl",
-            (_, "wget") => "wget",
-            (_, "git") => "git",
-            (_, "jq") => "jq",
-            (_, "tar") => "tar",
-            (_, "gzip") => "gzip",
-            (OsType::Alpine, "rsync") => "rsync",
-            (_, "rsync") => "rsync",
-            (OsType::Alpine, "ssh") => "openssh-client",
-            (_, "ssh") => "openssh-client",
-            _ => tool,
+            (_, "curl") => "curl".to_string(),
+            (_, "wget") => "wget".to_string(),
+            (_, "git") => "git".to_string(),
+            (_, "jq") => "jq".to_string(),
+            (_, "tar") => "tar".to_string(),
+            (_, "gzip") => "gzip".to_string(),
+            (OsType::Alpine, "rsync") => "rsync".to_string(),
+            (_, "rsync") => "rsync".to_string(),
+            (OsType::Alpine, "ssh") => "openssh-client".to_string(),
+            (_, "ssh") => "openssh-client".to_string(),
+            _ => tool.to_string(),
         }
     }
 }

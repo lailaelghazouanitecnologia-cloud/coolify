@@ -8,6 +8,57 @@ pub struct Config {
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
     pub providers: ProvidersConfig,
+    pub security: SecurityConfig,
+    /// JWT secret for API authentication
+    #[serde(default = "default_jwt_secret")]
+    pub jwt_secret: String,
+    /// Application key for encryption (like Laravel APP_KEY)
+    #[serde(default = "default_app_key")]
+    pub app_key: String,
+}
+
+fn default_jwt_secret() -> String {
+    std::env::var("JWT_SECRET").unwrap_or_else(|_| "change-me-in-production".to_string())
+}
+
+fn default_app_key() -> String {
+    std::env::var("APP_KEY").unwrap_or_else(|_| "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string())
+}
+
+/// Security configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityConfig {
+    /// Enable API rate limiting
+    #[serde(default)]
+    pub rate_limiting_enabled: bool,
+    /// Requests per minute for API rate limiting
+    #[serde(default = "default_rate_limit")]
+    pub rate_limit_per_minute: u32,
+    /// CORS allowed origins
+    #[serde(default)]
+    pub cors_origins: Vec<String>,
+    /// Require HTTPS in production
+    #[serde(default = "default_true")]
+    pub require_https: bool,
+    /// Token expiration in hours
+    #[serde(default = "default_token_expiration")]
+    pub token_expiration_hours: u32,
+}
+
+fn default_rate_limit() -> u32 { 60 }
+fn default_true() -> bool { true }
+fn default_token_expiration() -> u32 { 24 }
+
+impl Default for SecurityConfig {
+    fn default() -> Self {
+        Self {
+            rate_limiting_enabled: true,
+            rate_limit_per_minute: 60,
+            cors_origins: Vec::new(),
+            require_https: true,
+            token_expiration_hours: 24,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +141,9 @@ impl Default for Config {
                 aws: None,
                 linode: None,
             },
+            security: SecurityConfig::default(),
+            jwt_secret: default_jwt_secret(),
+            app_key: default_app_key(),
         }
     }
 }
