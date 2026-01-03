@@ -17,3 +17,5 @@ pub mod tags;
 pub mod backups;
 pub mod team_invitations;
 pub mod settings;
+pub mod github_apps;
+pub mod cloud_providers;

@@ -155,6 +155,35 @@ pub fn api_routes() -> Router<Arc<AppState>> {
         .route("/settings/license", put(handlers::settings::update_license))
         .route("/settings/status", get(handlers::settings::get_system_status))
         .route("/settings/cleanup", post(handlers::settings::trigger_cleanup))
+
+        // GitHub Apps
+        .route("/github-apps", get(handlers::github_apps::list))
+        .route("/github-apps", post(handlers::github_apps::create))
+        .route("/github-apps/:id", get(handlers::github_apps::get))
+        .route("/github-apps/:id", put(handlers::github_apps::update))
+        .route("/github-apps/:id", delete(handlers::github_apps::delete))
+        .route("/github-apps/:id/repositories", get(handlers::github_apps::repositories))
+        .route("/github-apps/:id/repositories/:owner/:repo/branches", get(handlers::github_apps::branches))
+        .route("/github-apps/:id/installation-url", get(handlers::github_apps::installation_url))
+        .route("/github-apps/:id/installation-callback", get(handlers::github_apps::installation_callback))
+        .route("/github-apps/:id/refresh-token", post(handlers::github_apps::refresh_token))
+        .route("/github-apps/:id/check-permissions", get(handlers::github_apps::check_permissions))
+
+        // Cloud Provider Tokens
+        .route("/cloud-tokens", get(handlers::cloud_providers::list))
+        .route("/cloud-tokens", post(handlers::cloud_providers::create))
+        .route("/cloud-tokens/:id", get(handlers::cloud_providers::get))
+        .route("/cloud-tokens/:id", put(handlers::cloud_providers::update))
+        .route("/cloud-tokens/:id", delete(handlers::cloud_providers::delete))
+        .route("/cloud-tokens/:id/validate", post(handlers::cloud_providers::validate))
+
+        // Hetzner-specific endpoints
+        .route("/cloud-tokens/:id/hetzner/locations", get(handlers::cloud_providers::hetzner_locations))
+        .route("/cloud-tokens/:id/hetzner/server-types", get(handlers::cloud_providers::hetzner_server_types))
+        .route("/cloud-tokens/:id/hetzner/images", get(handlers::cloud_providers::hetzner_images))
+        .route("/cloud-tokens/:id/hetzner/ssh-keys", get(handlers::cloud_providers::hetzner_ssh_keys))
+        .route("/cloud-tokens/:id/hetzner/servers", post(handlers::cloud_providers::create_hetzner_server))
+        .route("/cloud-tokens/:id/hetzner/servers/:server_id", delete(handlers::cloud_providers::delete_hetzner_server))
 }
 
 /// Webhook routes that don't require authentication

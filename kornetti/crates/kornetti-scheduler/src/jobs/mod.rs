@@ -15,6 +15,9 @@ pub mod server_check;
 pub mod server_connection_check;
 pub mod server_metrics;
 pub mod validate_and_install_server;
+pub mod sentinel;
+pub mod pull_request_preview;
+pub mod ssl_certificate;
 
 // Re-export existing jobs
 pub use container_status::{
@@ -44,6 +47,24 @@ pub use restart_proxy::{RestartProxyJob, RestartProxyContext, RestartProxyResult
 pub use scheduled_task::{ScheduledTaskJob, ScheduledTaskContext, ScheduledTaskResult, ScheduledTaskManager};
 pub use server_connection_check::{ServerConnectionCheckJob, ServerConnectionCheckContext, ConnectionCheckResult};
 pub use validate_and_install_server::{ValidateAndInstallServerJob, ValidateAndInstallContext, ValidationResult, ValidationStep};
+
+// Re-export new jobs
+pub use sentinel::{
+    CheckAndStartSentinelJob, StopSentinelJob, UpdateSentinelJob, ProcessSentinelPushJob,
+    SentinelContext, SentinelResult, SentinelPushData, StopSentinelContext,
+};
+pub use pull_request_preview::{
+    PullRequestPreviewJob, CleanupOrphanedPreviewsJob, PostDeploymentStatusJob,
+    PullRequestContext, PullRequestAction, PullRequestResult,
+    CleanupPreviewsContext, CleanupPreviewsResult,
+    DeploymentStatusContext, DeploymentStatusType,
+};
+pub use ssl_certificate::{
+    RegenerateSslCertJob, CheckSslCertificatesJob, UploadSslCertificateJob,
+    SslCertContext, SslCertResult, SslProvider,
+    CheckCertsContext, CheckCertsResult,
+    UploadCertContext,
+};
 
 // Job trait and context types used by new-style jobs
 use async_trait::async_trait;
