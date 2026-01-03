@@ -15,6 +15,80 @@ pub struct ApiError {
     pub code: Option<String>,
 }
 
+impl ApiError {
+    /// Create an internal server error
+    pub fn internal(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: message.into(),
+            code: Some("INTERNAL_ERROR".to_string()),
+        }
+    }
+
+    /// Create a not found error
+    pub fn not_found(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::NOT_FOUND,
+            message: message.into(),
+            code: Some("NOT_FOUND".to_string()),
+        }
+    }
+
+    /// Create a bad request error
+    pub fn bad_request(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            message: message.into(),
+            code: Some("BAD_REQUEST".to_string()),
+        }
+    }
+
+    /// Create an unauthorized error
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::UNAUTHORIZED,
+            message: message.into(),
+            code: Some("UNAUTHORIZED".to_string()),
+        }
+    }
+
+    /// Create a forbidden error
+    pub fn forbidden(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::FORBIDDEN,
+            message: message.into(),
+            code: Some("FORBIDDEN".to_string()),
+        }
+    }
+
+    /// Create a conflict error
+    pub fn conflict(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::CONFLICT,
+            message: message.into(),
+            code: Some("CONFLICT".to_string()),
+        }
+    }
+
+    /// Create a validation error
+    pub fn validation(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::UNPROCESSABLE_ENTITY,
+            message: message.into(),
+            code: Some("VALIDATION_ERROR".to_string()),
+        }
+    }
+
+    /// Create a service unavailable error
+    pub fn service_unavailable(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            message: message.into(),
+            code: Some("SERVICE_UNAVAILABLE".to_string()),
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct ErrorResponse {
     error: ErrorBody,
