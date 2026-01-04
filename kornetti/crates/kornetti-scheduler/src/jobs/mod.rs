@@ -18,6 +18,10 @@ pub mod validate_and_install_server;
 pub mod sentinel;
 pub mod pull_request_preview;
 pub mod ssl_certificate;
+pub mod update_checker;
+pub mod cleanup;
+pub mod server_storage;
+pub mod github_permission;
 
 // Re-export existing jobs
 pub use container_status::{
@@ -64,6 +68,46 @@ pub use ssl_certificate::{
     SslCertContext, SslCertResult, SslProvider,
     CheckCertsContext, CheckCertsResult,
     UploadCertContext,
+};
+
+// Re-export update checker jobs
+pub use update_checker::{
+    CheckForUpdatesJob, CheckForUpdatesPayload, UpdateInfo,
+    UpdateKornettiJob, UpdateKornettiPayload,
+    PullChangelogJob, PullChangelogPayload,
+    PullTemplatesJob, PullTemplatesPayload,
+    CheckTraefikVersionJob, CheckTraefikVersionPayload,
+    CheckHelperImageJob, CheckHelperImagePayload,
+};
+
+// Re-export cleanup jobs
+pub use cleanup::{
+    CleanupHelperContainersJob, CleanupHelperContainersPayload,
+    CleanupInstanceJob, CleanupInstancePayload,
+    CleanupOrphanedPreviewsJob as CleanupOrphanedPreviewContainersJob,
+    CleanupOrphanedPreviewsPayload,
+    CleanupStaleConnectionsJob, CleanupStaleConnectionsPayload,
+    ConnectProxyToNetworksJob, ConnectProxyToNetworksPayload,
+    VolumeCloneJob, VolumeClonePayload,
+};
+
+// Re-export server storage jobs
+pub use server_storage::{
+    ServerStorageCheckJob, ServerStorageCheckPayload, StorageInfo,
+    ServerStorageSaveJob, ServerStorageSavePayload,
+    ServerLimitCheckJob, ServerLimitCheckPayload,
+    ServerPatchCheckJob, ServerPatchCheckPayload, PatchInfo,
+    PushServerUpdateJob, PushServerUpdatePayload, FileUpdate,
+    ServerFilesJob, ServerFilesPayload,
+};
+
+// Re-export GitHub permission jobs
+pub use github_permission::{
+    GithubAppPermissionJob, GithubAppPermissionPayload, GithubAppPermissions, PermissionLevel,
+    RefreshGithubTokenJob, RefreshGithubTokenPayload,
+    SyncGithubReposJob, SyncGithubReposPayload,
+    ProcessGithubWebhookJob, ProcessGithubWebhookPayload,
+    CreateGithubDeploymentStatusJob, CreateGithubDeploymentStatusPayload,
 };
 
 // Job trait and context types used by new-style jobs

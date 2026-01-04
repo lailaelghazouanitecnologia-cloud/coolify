@@ -26,6 +26,7 @@ pub mod ssl_certificate;
 pub mod tag;
 pub mod team_invitation;
 pub mod service_component;
+pub mod swarm;
 
 pub use server::*;
 pub use application::*;
@@ -53,3 +54,4 @@ pub use ssl_certificate::*;
 pub use tag::*;
 pub use team_invitation::*;
 pub use service_component::*;
+pub use swarm::*;
