@@ -30,6 +30,7 @@ pub mod service;
 pub mod swarm;
 pub mod docker;
 pub mod user;
+pub mod auth;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -310,4 +311,14 @@ pub use user::{
     DeletedResourceCounts, DeletionFailure,
     DeletedServer, CleanedUpResources, ServerDeletionFailure, DeletionFailureReason,
     DeletedTeam, TeamResourceCounts, TransferredTeam, TeamDeletionFailure, TeamFailureReason,
+};
+pub use auth::{
+    CreateUser, CreateUserInput, CreateUserOutput,
+    UpdatePassword, UpdatePasswordInput, UpdatePasswordOutput,
+    RequestPasswordReset, RequestPasswordResetInput, RequestPasswordResetOutput,
+    VerifyResetToken, VerifyResetTokenInput, VerifyResetTokenOutput,
+    CompletePasswordReset, CompletePasswordResetInput, CompletePasswordResetOutput,
+    UpdateUserProfile, UpdateUserProfileInput, UpdateUserProfileOutput,
+    DeleteUserAccount, DeleteUserAccountInput, DeleteUserAccountOutput, DeletedUserResources,
+    PasswordRules, EmailValidator, TokenGenerator, AuthRateLimiter,
 };

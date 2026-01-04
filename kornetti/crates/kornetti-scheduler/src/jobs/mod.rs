@@ -22,6 +22,8 @@ pub mod update_checker;
 pub mod cleanup;
 pub mod server_storage;
 pub mod github_permission;
+pub mod notification_delivery;
+pub mod helper_management;
 
 // Re-export existing jobs
 pub use container_status::{
@@ -108,6 +110,45 @@ pub use github_permission::{
     SyncGithubReposJob, SyncGithubReposPayload,
     ProcessGithubWebhookJob, ProcessGithubWebhookPayload,
     CreateGithubDeploymentStatusJob, CreateGithubDeploymentStatusPayload,
+};
+
+// Re-export notification delivery jobs
+pub use notification_delivery::{
+    SendDiscordNotificationJob as DiscordDeliveryJob,
+    SendSlackNotificationJob as SlackDeliveryJob,
+    SendTelegramNotificationJob as TelegramDeliveryJob,
+    SendPushoverNotificationJob as PushoverDeliveryJob,
+    SendWebhookNotificationJob as WebhookDeliveryJob,
+    SendEmailNotificationJob as EmailDeliveryJob,
+    DispatchNotificationJob,
+    DiscordNotificationPayload, SlackNotificationPayload, TelegramNotificationPayload,
+    PushoverNotificationPayload, WebhookNotificationPayload, EmailNotificationPayload,
+    DispatchNotificationPayload, NotificationEventType, WebhookMethod,
+    DiscordField, SlackField,
+};
+
+// Re-export helper management jobs
+pub use helper_management::{
+    CheckTraefikVersionJob as TraefikVersionJob,
+    CheckTraefikVersionForServerJob,
+    CheckTraefikVersionPayload as TraefikVersionPayload,
+    CheckTraefikVersionForServerPayload,
+    CheckHelperImageJob as HelperImageJob,
+    CheckHelperImagePayload as HelperImagePayload,
+    CleanupHelperContainersJob as HelperCleanupJob,
+    CleanupHelperContainersPayload as HelperCleanupPayload,
+    CleanupOrphanedPreviewsJob as OrphanedPreviewsJob,
+    CleanupOrphanedPreviewsPayload as OrphanedPreviewsPayload,
+    ConnectProxyToNetworksJob as ProxyNetworkJob,
+    ConnectProxyToNetworksPayload as ProxyNetworkPayload,
+    PullChangelogJob as ChangelogJob,
+    PullChangelogPayload as ChangelogPayload,
+    PullTemplatesJob as TemplatesJob,
+    PullTemplatesPayload as TemplatesPayload,
+    VolumeCloneJob, VolumeClonePayload,
+    CleanupStaleConnectionsJob as StaleConnectionsJob,
+    CleanupStaleConnectionsPayload as StaleConnectionsPayload,
+    StartLogDrainJob, StopLogDrainJob, LogDrainPayload, LogDrainType,
 };
 
 // Job trait and context types used by new-style jobs

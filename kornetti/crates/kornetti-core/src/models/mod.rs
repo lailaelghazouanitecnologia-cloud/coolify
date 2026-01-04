@@ -46,6 +46,14 @@ pub mod gitlab_app;
 pub mod notification_settings;
 pub mod local_file_volume;
 
+// Execution history models
+pub mod execution_history;
+
+// Service sub-component models
+pub mod service_application;
+pub mod service_database;
+pub mod shared_environment_variable;
+
 // Core re-exports
 pub use server::*;
 pub use application::*;
@@ -90,3 +98,11 @@ pub use github_app::*;
 pub use gitlab_app::*;
 pub use notification_settings::*;
 pub use local_file_volume::*;
+
+// Execution history re-exports
+pub use execution_history::*;
+
+// Service sub-component re-exports
+pub use service_application::*;
+pub use service_database::*;
+pub use shared_environment_variable::*;
