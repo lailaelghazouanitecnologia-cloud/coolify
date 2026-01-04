@@ -184,6 +184,16 @@ pub fn api_routes() -> Router<Arc<AppState>> {
         .route("/cloud-tokens/:id/hetzner/ssh-keys", get(handlers::cloud_providers::hetzner_ssh_keys))
         .route("/cloud-tokens/:id/hetzner/servers", post(handlers::cloud_providers::create_hetzner_server))
         .route("/cloud-tokens/:id/hetzner/servers/:server_id", delete(handlers::cloud_providers::delete_hetzner_server))
+
+        // OAuth Settings
+        .route("/oauth", get(handlers::oauth::list))
+        .route("/oauth", put(handlers::oauth::update_all))
+        .route("/oauth/enabled", get(handlers::oauth::any_enabled))
+        .route("/oauth/available", get(handlers::oauth::available_providers))
+        .route("/oauth/:provider", get(handlers::oauth::get))
+        .route("/oauth/:provider", put(handlers::oauth::update))
+        .route("/oauth/:provider/redirect", get(handlers::oauth::redirect_url))
+        .route("/oauth/:provider/callback", get(handlers::oauth::callback))
 }
 
 /// Webhook routes that don't require authentication

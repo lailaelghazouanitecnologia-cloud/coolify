@@ -7,12 +7,21 @@ mod generate_config;
 mod load_compose;
 mod deploy_application;
 mod restart_application;
+mod nixpacks_build;
+mod dockerfile_generate;
 
 pub use stop_application::StopApplication;
 pub use generate_config::GenerateConfig;
 pub use load_compose::LoadComposeFile;
 pub use deploy_application::{DeployApplication, DeployApplicationInput, DeployApplicationOutput};
 pub use restart_application::{RestartApplication, RestartApplicationInput, RestartApplicationOutput};
+pub use nixpacks_build::{
+    NixpacksBuild, NixpacksBuildInput, NixpacksBuildOutput, NixpacksAppType,
+    NixpacksPlan, NixpacksPhases, NixpacksStartPhase,
+};
+pub use dockerfile_generate::{
+    DockerfileGenerate, DockerfileGenerateInput, DockerfileGenerateOutput, BuildPackType,
+};
 
 use serde::{Deserialize, Serialize};
 

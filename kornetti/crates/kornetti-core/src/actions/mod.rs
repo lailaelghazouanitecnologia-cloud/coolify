@@ -27,6 +27,7 @@ pub mod database;
 pub mod proxy;
 pub mod application;
 pub mod service;
+pub mod swarm;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -277,7 +278,17 @@ pub use proxy::{
 };
 pub use application::{
     StopApplication, GenerateConfig, LoadComposeFile,
+    NixpacksBuild, NixpacksBuildInput, NixpacksBuildOutput, NixpacksAppType,
+    DockerfileGenerate, DockerfileGenerateInput, DockerfileGenerateOutput, BuildPackType,
 };
 pub use service::{
     StartService, StopService, RestartService, DeleteService,
+};
+pub use swarm::{
+    InitSwarm, InitSwarmInput, InitSwarmOutput,
+    JoinSwarm, JoinSwarmInput, JoinSwarmOutput,
+    DeploySwarmService, DeploySwarmServiceInput, DeploySwarmServiceOutput,
+    ListSwarmNodes, SwarmNode, SwarmNodeStatus, SwarmNodeRole,
+    PromoteNode, DemoteNode, DrainNode, RemoveNode,
+    PlacementConstraint, UpdateConfig, RollbackConfig, SwarmNetwork,
 };

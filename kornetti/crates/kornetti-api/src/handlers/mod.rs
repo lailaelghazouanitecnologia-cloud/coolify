@@ -19,3 +19,4 @@ pub mod team_invitations;
 pub mod settings;
 pub mod github_apps;
 pub mod cloud_providers;
+pub mod oauth;
