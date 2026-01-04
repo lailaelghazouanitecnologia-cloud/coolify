@@ -1,5 +1,6 @@
 //! Domain models for Kornetti
 
+// Core models
 pub mod server;
 pub mod application;
 pub mod database;
@@ -16,7 +17,7 @@ pub mod git_source;
 pub mod notification;
 pub mod scheduled_task;
 
-// New models
+// Application-related models
 pub mod application_deployment_queue;
 pub mod application_preview;
 pub mod application_setting;
@@ -28,6 +29,24 @@ pub mod team_invitation;
 pub mod service_component;
 pub mod swarm;
 
+// Destination models
+pub mod standalone_docker;
+// Note: swarm module already contains SwarmDocker
+
+// Database models
+pub mod standalone_database;
+pub mod scheduled_database_backup;
+
+// Configuration models
+pub mod instance_settings;
+pub mod oauth_setting;
+pub mod cloud_provider_token;
+pub mod github_app;
+pub mod gitlab_app;
+pub mod notification_settings;
+pub mod local_file_volume;
+
+// Core re-exports
 pub use server::*;
 pub use application::*;
 pub use database::*;
@@ -44,7 +63,7 @@ pub use git_source::*;
 pub use notification::*;
 pub use scheduled_task::*;
 
-// Re-export new models
+// Application-related re-exports
 pub use application_deployment_queue::*;
 pub use application_preview::*;
 pub use application_setting::*;
@@ -55,3 +74,19 @@ pub use tag::*;
 pub use team_invitation::*;
 pub use service_component::*;
 pub use swarm::*;
+
+// Destination re-exports
+pub use standalone_docker::*;
+
+// Database re-exports
+pub use standalone_database::*;
+pub use scheduled_database_backup::*;
+
+// Configuration re-exports
+pub use instance_settings::*;
+pub use oauth_setting::*;
+pub use cloud_provider_token::*;
+pub use github_app::*;
+pub use gitlab_app::*;
+pub use notification_settings::*;
+pub use local_file_volume::*;
