@@ -20,3 +20,6 @@ pub mod settings;
 pub mod github_apps;
 pub mod cloud_providers;
 pub mod oauth;
+pub mod resources;
+pub mod destinations;
+pub mod deploy;

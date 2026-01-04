@@ -194,6 +194,30 @@ pub fn api_routes() -> Router<Arc<AppState>> {
         .route("/oauth/:provider", put(handlers::oauth::update))
         .route("/oauth/:provider/redirect", get(handlers::oauth::redirect_url))
         .route("/oauth/:provider/callback", get(handlers::oauth::callback))
+
+        // Resources (cross-type resource listing)
+        .route("/resources", get(handlers::resources::list))
+        .route("/resources/stats", get(handlers::resources::stats))
+        .route("/resources/:uuid", get(handlers::resources::get_by_uuid))
+
+        // Destinations (Docker networks)
+        .route("/destinations", get(handlers::destinations::list))
+        .route("/destinations", post(handlers::destinations::create))
+        .route("/destinations/:id", get(handlers::destinations::get))
+        .route("/destinations/:id", put(handlers::destinations::update))
+        .route("/destinations/:id", delete(handlers::destinations::delete))
+        .route("/destinations/:id/verify", post(handlers::destinations::verify))
+        .route("/destinations/:id/recreate", post(handlers::destinations::recreate))
+        // Swarm-specific destination endpoints
+        .route("/destinations/:id/swarm/nodes", get(handlers::destinations::swarm_nodes))
+        .route("/destinations/:id/swarm/services", get(handlers::destinations::swarm_services))
+        .route("/destinations/:id/swarm/init", post(handlers::destinations::swarm_init))
+        .route("/destinations/:id/swarm/tokens", get(handlers::destinations::swarm_tokens))
+        .route("/destinations/:id/swarm/leave", post(handlers::destinations::swarm_leave))
+
+        // Deploy API (webhook-style deployments)
+        .route("/deploy", get(handlers::deploy::deploy_by_uuid))
+        .route("/deploy/bulk", post(handlers::deploy::bulk_deploy))
 }
 
 /// Webhook routes that don't require authentication
