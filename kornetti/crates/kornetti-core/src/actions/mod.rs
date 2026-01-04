@@ -28,6 +28,8 @@ pub mod proxy;
 pub mod application;
 pub mod service;
 pub mod swarm;
+pub mod docker;
+pub mod user;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -291,4 +293,21 @@ pub use swarm::{
     ListSwarmNodes, SwarmNode, SwarmNodeStatus, SwarmNodeRole,
     PromoteNode, DemoteNode, DrainNode, RemoveNode,
     PlacementConstraint, UpdateConfig, RollbackConfig, SwarmNetwork,
+};
+pub use docker::{
+    GetContainersStatus, GetContainersStatusInput, GetContainersStatusOutput,
+    ContainerInfo, ContainerStats, ContainerStatusInfo, ContainerStatus, HealthStatus,
+    GetContainerLogs, GetContainerLogsInput, GetContainerLogsOutput, LogLine, LogStream,
+    GetContainerStats, GetContainerStatsInput, GetContainerStatsOutput,
+    ContainerStatsInfo, ServerResourceSummary, PortMapping, ContainerSummary,
+    DockerActions,
+};
+pub use user::{
+    DeleteUserResources, DeleteUserResourcesInput, DeleteUserResourcesOutput,
+    DeleteUserServers, DeleteUserServersInput, DeleteUserServersOutput,
+    DeleteUserTeams, DeleteUserTeamsInput, DeleteUserTeamsOutput,
+    UserActions, UserResources, TeamSummary, ServerSummary, ResourceSummary,
+    DeletedResourceCounts, DeletionFailure,
+    DeletedServer, CleanedUpResources, ServerDeletionFailure, DeletionFailureReason,
+    DeletedTeam, TeamResourceCounts, TransferredTeam, TeamDeletionFailure, TeamFailureReason,
 };
